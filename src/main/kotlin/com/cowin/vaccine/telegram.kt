@@ -8,13 +8,14 @@ import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.Message
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.google.common.util.concurrent.RateLimiter
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 // Every 30 seconds
 private val groupLimiter = mapOf<String, RateLimiter>(
     "blr" to RateLimiter.create(0.03),
-    "del" to RateLimiter.create(0.03)
+    "del" to RateLimiter.create(0.3)
 )
 
 class TelegramBot(private val supplier: (group: String) -> List<String>, private val telegramApiToken: String) {
@@ -65,33 +66,47 @@ class TelegramBot(private val supplier: (group: String) -> List<String>, private
         }
     }
 
+    // May not be the most ideal solution but since this is a task that has to be live for the lifecycle of the
+    // application, I think it's okay to use GlobalScope.
+    @OptIn(DelicateCoroutinesApi::class)
     private fun keepPolling(bot: Bot, message: Message, group: String) {
         GlobalScope.launch {
             while (tasks.contains(message.chat.id.toString())) {
                 groupLimiter[group]!!.acquire()
                 try {
                     for (status in supplier.invoke(group)) {
-                        val result = bot.sendMessage(
-                            chatId = ChatId.fromId(message.chat.id),
-                            text = status.replace('-', ' '), // Telegram doesn't like '-'
-                            parseMode = ParseMode.MARKDOWN_V2
-                        )
-                        if (result.first?.isSuccessful != true) {
-                            println(result)
-                            // try without the markdown parser
-                            bot.sendMessage(
-                                chatId = ChatId.fromId(message.chat.id),
-                                text = status.replace('-', ' '), // Telegram doesn't like '-'
-                            )
-                        }
+                        sendMessage(bot, message, status)
                     }
                 } catch (e: Exception) {
-                    // TODO: Do something about this.
+                    // TODO: Do something about this later. Right now, the application is being monitored regularly.
                     println(e)
                 }
             }
         }
         println("keep going")
+    }
+
+    private fun sendMessage(bot: Bot, message: Message, status: String) {
+        val result = bot.sendMessage(
+            chatId = ChatId.fromId(message.chat.id),
+            text = status.replace('-', ' '), // Telegram doesn't like '-'
+            parseMode = ParseMode.MARKDOWN_V2
+        )
+        if (result.first?.isSuccessful != true) {
+            println(result)
+            // try without the markdown parser
+            bot.sendMessage(
+                chatId = ChatId.fromId(message.chat.id),
+                text = sanitizeMessage(status),
+            )
+        }
+    }
+
+    // Telegram doesn't like '-', '.' when using MARKDOWN
+    private fun sanitizeMessage(message: String): String {
+        return message
+            .replace('-', ' ')
+            .replace('.', ' ')
     }
 }
 

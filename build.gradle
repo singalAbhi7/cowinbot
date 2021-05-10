@@ -3,8 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.0'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'org.techalien'
+version '0.2.0'
 
 repositories {
     mavenCentral()
@@ -19,6 +19,7 @@ dependencies {
     implementation "com.beust:klaxon:5.5"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testImplementation "io.mockk:mockk:1.11.0"
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
 
