@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.0'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.4'
+    implementation "com.github.kittinunf.fuel:fuel:2.3.1"
+    implementation "com.google.guava:guava:18.0"
+    implementation "com.beust:klaxon:5.5"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
