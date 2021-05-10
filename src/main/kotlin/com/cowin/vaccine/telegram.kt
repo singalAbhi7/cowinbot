@@ -76,7 +76,14 @@ class TelegramBot(private val supplier: (group: String) -> List<String>, private
                             text = status.replace('-', ' '), // Telegram doesn't like '-'
                             parseMode = ParseMode.MARKDOWN_V2
                         )
-                        println(result)
+                        if (result.first?.isSuccessful != true) {
+                            println(result)
+                            // try without the markdown parser
+                            bot.sendMessage(
+                                chatId = ChatId.fromId(message.chat.id),
+                                text = status.replace('-', ' '), // Telegram doesn't like '-'
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     // TODO: Do something about this.
