@@ -13,8 +13,12 @@ import kotlinx.coroutines.launch
 
 // Every 30 seconds
 private val rateLimiter: RateLimiter = RateLimiter.create(0.03)
+private val groupLimiter = mapOf<String, RateLimiter>(
+    "blr" to RateLimiter.create(0.03),
+    "del" to RateLimiter.create(0.03)
+)
 
-class TelegramBot(private val supplier: () -> List<String>, private val telegramApiToken: String) {
+class TelegramBot(private val supplier: (group: String) -> List<String>, private val telegramApiToken: String) {
     private val tasks = mutableSetOf<String>()
 
     fun startPolling() {
@@ -26,19 +30,30 @@ class TelegramBot(private val supplier: () -> List<String>, private val telegram
             token = telegramApiToken
             dispatch {
                 command("status") {
-
-                    bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = "Retrieving status")
-                    for (status in supplier.invoke()) {
-                        bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = status)
+                    if (args.isNotEmpty() && groups.containsKey(args[0])) {
+                        bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = "Retrieving status")
+                        for (status in supplier.invoke(args[0])) {
+                            bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = status)
+                        }
                     }
                 }
 
                 command("poll") {
                     if (tasks.add(message.chat.id.toString())) {
-                        bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = "Starting poller")
-                        keepPolling(bot, message)
+                        if (args.isNotEmpty() && groups.containsKey(args[0])) {
+                            bot.sendMessage(
+                                chatId = ChatId.fromId(message.chat.id),
+                                text = "Looking for vaccine availability"
+                            )
+                            keepPolling(bot, message, args[0])
+                        } else {
+                            bot.sendMessage(
+                                chatId = ChatId.fromId(message.chat.id),
+                                text = "Invalid group passed!"
+                            )
+                        }
                     } else {
-                        bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = "Poller is already running!")
+                        bot.sendMessage(chatId = ChatId.fromId(message.chat.id), text = "Already running!")
                     }
                 }
 
@@ -51,17 +66,22 @@ class TelegramBot(private val supplier: () -> List<String>, private val telegram
         }
     }
 
-    private fun keepPolling(bot: Bot, message: Message) {
+    private fun keepPolling(bot: Bot, message: Message, group: String) {
         GlobalScope.launch {
             while (tasks.contains(message.chat.id.toString())) {
-                rateLimiter.acquire()
-                for (status in supplier.invoke()) {
-                    val result = bot.sendMessage(
-                        chatId = ChatId.fromId(message.chat.id),
-                        text = status,
-                        parseMode = ParseMode.MARKDOWN_V2
-                    )
-                    println(result)
+                groupLimiter[group]!!.acquire()
+                try {
+                    for (status in supplier.invoke(group)) {
+                        val result = bot.sendMessage(
+                            chatId = ChatId.fromId(message.chat.id),
+                            text = status.replace('-', ' '), // Telegram doesn't like '-'
+                            parseMode = ParseMode.MARKDOWN_V2
+                        )
+                        println(result)
+                    }
+                } catch (e: Exception) {
+                    // TODO: Do something about this.
+                    println(e)
                 }
             }
         }

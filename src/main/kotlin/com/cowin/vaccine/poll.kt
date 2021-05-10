@@ -10,8 +10,11 @@ import java.io.StringReader
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-// TODO: Need to add support for configurable region wise instances
-val districts = arrayOf("265", "276", "294", "291", "277", "292", "288")
+val groups = mapOf(
+    "blr" to arrayOf("265", "276", "294", "291", "277", "292", "288"),
+    "del" to arrayOf("141", "145", "140", "146", "147", "143", "149", "144", "150", "142")
+)
+
 val names = mapOf(
     "265" to "Bangalore Urban",
     "276" to "Bangalore Rural",
@@ -19,7 +22,18 @@ val names = mapOf(
     "291" to "Chikkaballapur",
     "277" to "Kolar",
     "292" to "Ramanagara",
-    "288" to "Tumkur"
+    "288" to "Tumkur",
+
+    "141" to "Central Delhi",
+    "145" to "East Delhi",
+    "140" to "New Delhi",
+    "146" to "North Delhi",
+    "147" to "North East Delhi",
+    "143" to "North West Delhi",
+    "149" to "South Delhi",
+    "144" to "South East Delhi",
+    "150" to "South West Delhi",
+    "142" to "West Delhi"
 )
 
 @ExperimentalTime
@@ -30,9 +44,9 @@ class Poller(private val cowinApi: Cowin) {
         expireDedupe()
     }
 
-    fun getStatuses(): List<String> {
+    fun getStatuses(group: String = "blr"): List<String> {
         val messages = mutableListOf<String>()
-        for (district in districts) {
+        for (district in groups[group]!!) {
             print ("Status for ${names[district]}:\n")
             messages.addAll(forDistrict(district))
         }
@@ -56,17 +70,22 @@ class Poller(private val cowinApi: Cowin) {
         return messages
     }
 
+    // TODO: Code needs to be cleaned up.
     private fun processJson(json: JsonObject): List<String> {
         val list = mutableListOf<String>()
-        val centers = json["centers"] as JsonArray<JsonObject>
-        for (center in centers) {
-            val sessions = center["sessions"] as JsonArray<JsonObject>
-            for (session in sessions) {
-                val ageLimit = session["min_age_limit"] as Int
-                val capacity = session["available_capacity"] as? Int ?: getCastedCapacity(session)
-                if (ageLimit < 45 && capacity > 0) {
-                    val message = printSession(center, session)
-                    if (dedupe.add(message)) list.add(message)
+        val centers = json["centers"] as? JsonArray<JsonObject>?
+        if (centers != null) {
+            for (center in centers) {
+                val sessions = center["sessions"] as? JsonArray<JsonObject>?
+                if (sessions != null) {
+                    for (session in sessions) {
+                        val ageLimit = session["min_age_limit"] as? Int ?: 0
+                        val capacity = session["available_capacity"] as? Int ?: getCastedCapacity(session)
+                        if (ageLimit < 45 && capacity > 0) {
+                            val message = printSession(center, session)
+                            if (dedupe.add(message)) list.add(message)
+                        }
+                    }
                 }
             }
         }
@@ -84,7 +103,7 @@ class Poller(private val cowinApi: Cowin) {
 }
 
 fun getCastedCapacity(session: JsonObject): Int {
-    return (session["available_capacity"] as Double).toInt()
+    return (session["available_capacity"] as? Double ?: 0).toInt()
 }
 
 fun printSession(center: JsonObject, session: JsonObject): String {
