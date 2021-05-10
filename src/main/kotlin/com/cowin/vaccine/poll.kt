@@ -11,7 +11,8 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 val groups = mapOf(
-    "blr" to arrayOf("265", "276", "294", "291", "277", "292", "288"),
+//  "blr" to arrayOf("265", "276", "294", "291", "277", "292", "288"),
+    "blr" to arrayOf("265", "276", "294"),
     "del" to arrayOf("141", "145", "140", "146", "147", "143", "149", "144", "150", "142")
 )
 

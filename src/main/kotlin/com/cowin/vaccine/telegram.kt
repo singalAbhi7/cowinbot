@@ -12,7 +12,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 // Every 30 seconds
-private val rateLimiter: RateLimiter = RateLimiter.create(0.03)
 private val groupLimiter = mapOf<String, RateLimiter>(
     "blr" to RateLimiter.create(0.03),
     "del" to RateLimiter.create(0.03)
