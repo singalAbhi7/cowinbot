@@ -1,3 +1,5 @@
+package com.cowin.vaccine
+
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
@@ -45,7 +47,7 @@ class Poller(private val cowinApi: Cowin) {
             val sessions = processJson(json)
             val list = mutableListOf<String>()
             if (sessions.isNotEmpty()) {
-                list.add("*${names[district]}: Available*")
+                list.add("*${names[district]} District*")
                 list.addAll(sessions)
                 messages.add(list.joinToString(separator = "\n"))
             }
@@ -87,7 +89,7 @@ fun getCastedCapacity(session: JsonObject): Int {
 
 fun printSession(center: JsonObject, session: JsonObject): String {
     val date: String = (session["date"] as String).replace('-', '/')
-    val message = "*${center["name"]}*, ${date}, *Capacity:* ${session["available_capacity"]}"
+    val message = "*${center["name"]}*, ${date}, *Available slots:* ${session["available_capacity"]}"
     println(message)
     return message
 }

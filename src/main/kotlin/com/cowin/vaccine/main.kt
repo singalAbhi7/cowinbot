@@ -1,3 +1,5 @@
+package com.cowin.vaccine
+
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

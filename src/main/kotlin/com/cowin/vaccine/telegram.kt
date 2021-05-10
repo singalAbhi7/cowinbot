@@ -1,3 +1,5 @@
+package com.cowin.vaccine
+
 import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch

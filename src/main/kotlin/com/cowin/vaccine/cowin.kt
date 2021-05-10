@@ -1,3 +1,5 @@
+package com.cowin.vaccine
+
 import com.github.kittinunf.fuel.httpGet
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -32,6 +34,7 @@ private class Loader: CacheLoader<String, String>() {
             .header(headers)
             .responseString()
         val (payload, error) = result
+        println (error)
         return payload ?: ""
     }
 }
