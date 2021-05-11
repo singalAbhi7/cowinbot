@@ -7,16 +7,11 @@ import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.Message
 import com.github.kotlintelegrambot.entities.ParseMode
-import com.google.common.util.concurrent.RateLimiter
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-// Every 30 seconds
-private val groupLimiter = mapOf<String, RateLimiter>(
-    "blr" to RateLimiter.create(0.03),
-    "del" to RateLimiter.create(0.3)
-)
+import kotlin.time.Duration
 
 class TelegramBot(private val supplier: (group: String) -> List<String>, private val telegramApiToken: String) {
     private val tasks = mutableSetOf<String>()
@@ -68,11 +63,12 @@ class TelegramBot(private val supplier: (group: String) -> List<String>, private
 
     // May not be the most ideal solution but since this is a task that has to be live for the lifecycle of the
     // application, I think it's okay to use GlobalScope.
-    @OptIn(DelicateCoroutinesApi::class)
+    @OptIn(kotlin.time.ExperimentalTime::class)
     private fun keepPolling(bot: Bot, message: Message, group: String) {
-        GlobalScope.launch {
+        CoroutineScope(Dispatchers.Default).launch {
             while (tasks.contains(message.chat.id.toString())) {
-                groupLimiter[group]!!.acquire()
+                delay(Duration.Companion.seconds(1))
+                println("Updating for group: $group")
                 try {
                     for (status in supplier.invoke(group)) {
                         sendMessage(bot, message, status)
@@ -90,7 +86,7 @@ class TelegramBot(private val supplier: (group: String) -> List<String>, private
         val result = bot.sendMessage(
             chatId = ChatId.fromId(message.chat.id),
             text = status.replace('-', ' '), // Telegram doesn't like '-'
-            parseMode = ParseMode.MARKDOWN_V2
+            parseMode = ParseMode.MARKDOWN
         )
         if (result.first?.isSuccessful != true) {
             println(result)

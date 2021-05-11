@@ -36,7 +36,7 @@ private class Loader: CacheLoader<String, String>() {
         val (payload, error) = result
         if (error != null) {
             println("Cowin API error for district ${names[district]}: $error")
-        }
+        } else println("Cowin API success for district ${names[district]}")
         return payload ?: ""
     }
 }

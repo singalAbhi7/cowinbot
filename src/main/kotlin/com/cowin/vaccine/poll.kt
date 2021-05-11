@@ -3,10 +3,7 @@ package com.cowin.vaccine
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.StringReader
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -36,6 +33,7 @@ class Poller(
     private fun forDistrict(district: String): List<String> {
         val messages = mutableListOf<String>()
         val payload = cowinApi.getCowinResponse(district)
+        println("Process district: $district")
         val json = try {
             klaxon.parseJsonObject(StringReader(payload))
         } catch (e: Exception) { null }
@@ -63,7 +61,7 @@ class Poller(
                     for (session in sessions) {
                         val ageLimit = session["min_age_limit"] as? Int ?: 0
                         val available = session["available_capacity"] as? Int ?: getCastedCapacity(session)
-                        if (ageLimit < 45 && available >= 5) {
+                        if (ageLimit < 45 && available >= 3) {
                             val message = printSession(center, session)
                             if (dedupe.add(message)) list.add(message)
                         }
@@ -74,13 +72,11 @@ class Poller(
         return list
     }
 
-    // May not be the most ideal solution but since this is a task that has to be live for the lifecycle of the
-    // application, I think it's okay to use GlobalScope
-    @OptIn(DelicateCoroutinesApi::class)
     private fun expireDedupe()  {
-        GlobalScope.launch {
+        CoroutineScope(Dispatchers.Default).launch {
             while(true) {
                 delay(Duration.minutes(5))
+                println("Clearing notification history.")
                 dedupe.clear()
             }
         }
