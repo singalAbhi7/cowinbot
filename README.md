@@ -11,3 +11,13 @@ This is a rudimentary telegram bot server to poll cowin vaccination APIs and pub
 - Install gradle: https://docs.gradle.org/current/userguide/installation.html (Note: Be sure to install gradle-6.x. Build will fail with gradle 7).
 - Run `gradle wrapper` from the repository root to generate build scripts
 - Run `./gradlew build` 
+
+## Credit to
+- https://github.com/kotlin-telegram-bot/kotlin-telegram-bot
+- https://github.com/cbeust/klaxon
+- https://github.com/kittinunf/fuel
+- https://github.com/mockk/mockk
+
+## References
+- https://core.telegram.org/bots/api
+- https://docs.gradle.org/current/samples/sample_building_java_applications.html#run_the_init_task
