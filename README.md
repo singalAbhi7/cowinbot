@@ -1,6 +1,11 @@
 ## What and why
 This is a rudimentary telegram bot server to poll cowin vaccination APIs and publish vaccine availability to a telegram bot. 
 
+Some features:
+- Dedupe updates over a 5 minute window to avoid sending multiple back to back duplicate notifications.
+- Ability to configure district groups as needed and start bot pollers for a specific group. 
+- API calls to cowin are cached (Guava cache loader), rate limited and auto refreshed every X seconds. 
+
 ## Usage
 - Checkout the repository and build it (Recommend using Intellij to begin with). See below for building from scratch using CLI
 - Execute with Telegram API token as a parameter.
